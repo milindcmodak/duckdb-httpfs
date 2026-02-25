@@ -37,6 +37,7 @@ protected:
 struct CreateBearerTokenFunctions {
 public:
 	static constexpr const char *HUGGINGFACE_TYPE = "huggingface";
+	static constexpr const char *TURBOHTTPFS_TYPE = "turbohttpfs";
 
 	//! Register all CreateSecretFunctions
 	static void Register(ExtensionLoader &loader);
