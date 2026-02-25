@@ -1,5 +1,7 @@
 set(HTTPFS_SOURCES
     hffs.cpp
+    thfs.cpp
+    thfs_secret_function.cpp
     s3fs.cpp
     httpfs.cpp
     http_state.cpp
