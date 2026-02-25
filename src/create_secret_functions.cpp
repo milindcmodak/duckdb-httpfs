@@ -247,7 +247,7 @@ void CreateS3SecretFunctions::RegisterCreateSecretFunction(ExtensionLoader &load
 	secret_type.name = type;
 	secret_type.deserializer = KeyValueSecret::Deserialize<KeyValueSecret>;
 	secret_type.default_provider = "config";
-	secret_type.extension = "httpfs";
+	secret_type.extension = "thfss";
 
 	loader.RegisterSecretType(secret_type);
 
@@ -262,7 +262,7 @@ void CreateBearerTokenFunctions::Register(ExtensionLoader &loader) {
 	secret_type_hf.name = HUGGINGFACE_TYPE;
 	secret_type_hf.deserializer = KeyValueSecret::Deserialize<KeyValueSecret>;
 	secret_type_hf.default_provider = "config";
-	secret_type_hf.extension = "httpfs";
+	secret_type_hf.extension = "thfss";
 	loader.RegisterSecretType(secret_type_hf);
 
 	// Huggingface config provider
@@ -274,6 +274,18 @@ void CreateBearerTokenFunctions::Register(ExtensionLoader &loader) {
 	CreateSecretFunction hf_cred_fun = {HUGGINGFACE_TYPE, "credential_chain",
 	                                    CreateHuggingFaceSecretFromCredentialChain};
 	loader.RegisterFunction(hf_cred_fun);
+
+	// TurboHTTPFS secret
+	SecretType secret_type_thfs;
+	secret_type_thfs.name = TURBOHTTPFS_TYPE;
+	secret_type_thfs.deserializer = KeyValueSecret::Deserialize<KeyValueSecret>;
+	secret_type_thfs.default_provider = "config";
+	secret_type_thfs.extension = "thfss";
+	loader.RegisterSecretType(secret_type_thfs);
+
+	CreateSecretFunction thfs_config_fun = {TURBOHTTPFS_TYPE, "config", CreateBearerSecretFromConfig};
+	thfs_config_fun.named_parameters["token"] = LogicalType::VARCHAR;
+	loader.RegisterFunction(thfs_config_fun);
 }
 
 unique_ptr<BaseSecret> CreateBearerTokenFunctions::CreateSecretFunctionInternal(ClientContext &context,
@@ -284,6 +296,8 @@ unique_ptr<BaseSecret> CreateBearerTokenFunctions::CreateSecretFunctionInternal(
 	if (scope.empty()) {
 		if (input.type == HUGGINGFACE_TYPE) {
 			scope.push_back("hf://");
+		} else if (input.type == TURBOHTTPFS_TYPE) {
+			scope.push_back("thfs://");
 		} else {
 			throw InternalException("Unknown secret type found in httpfs extension: '%s'", input.type);
 		}

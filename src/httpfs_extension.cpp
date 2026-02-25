@@ -5,6 +5,7 @@
 #include "duckdb.hpp"
 #include "s3fs.hpp"
 #include "hffs.hpp"
+#include "thfs.hpp"
 #include "duckdb/common/local_file_system.hpp"
 #include "duckdb/main/client_context_file_opener.hpp"
 #ifdef OVERRIDE_ENCRYPTION_UTILS
@@ -23,6 +24,7 @@ static void LoadInternal(ExtensionLoader &loader) {
 
 	fs.RegisterSubSystem(make_uniq<HTTPFileSystem>());
 	fs.RegisterSubSystem(make_uniq<HuggingFaceFileSystem>());
+	fs.RegisterSubSystem(make_uniq<TurboHTTPFileSystem>());
 	fs.RegisterSubSystem(make_uniq<S3FileSystem>(BufferManager::GetBufferManager(instance)));
 
 	auto &config = DBConfig::GetConfig(instance);
@@ -102,6 +104,13 @@ static void LoadInternal(ExtensionLoader &loader) {
 	config.AddExtensionOption("hf_max_per_page", "Debug option to limit number of items returned in list requests",
 	                          LogicalType::UBIGINT, Value::UBIGINT(0));
 
+	// Turbo HTTP options
+	config.AddExtensionOption("thfs_use_ssl", "Use HTTPS for thfs:// URLs (set true for HTTPS backends)",
+	                          LogicalType::BOOLEAN, Value(false));
+
+	config.AddExtensionOption("thfs_token", "Bearer token for thfs:// requests (empty uses THFS_BEARER_TOKEN)",
+	                          LogicalType::VARCHAR, Value(""));
+
 	config.AddExtensionOption("merge_http_secret_into_s3_request", "Merges http secret params into S3 requests",
 	                          LogicalType::BOOLEAN, Value(true));
 
@@ -163,7 +172,7 @@ void HttpfsExtension::Load(ExtensionLoader &loader) {
 	LoadInternal(loader);
 }
 std::string HttpfsExtension::Name() {
-	return "httpfs";
+	return "thfss";
 }
 
 std::string HttpfsExtension::Version() const {
@@ -178,7 +187,7 @@ std::string HttpfsExtension::Version() const {
 
 extern "C" {
 
-DUCKDB_CPP_EXTENSION_ENTRY(httpfs, loader) {
+DUCKDB_CPP_EXTENSION_ENTRY(thfss, loader) {
 	duckdb::LoadInternal(loader);
 }
 }
